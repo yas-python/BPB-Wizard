@@ -249,71 +249,71 @@ func openURL(url string) error {
 }
 
 func checkBPBPanel(url string) error {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
+	// ticker := time.NewTicker(5 * time.Second)
+	// defer ticker.Stop()
 
-	dialer := &net.Dialer{
-		Resolver: &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: time.Duration(5000) * time.Millisecond,
-				}
+	// dialer := &net.Dialer{
+	// 	Resolver: &net.Resolver{
+	// 		PreferGo: true,
+	// 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+	// 			d := net.Dialer{
+	// 				Timeout: time.Duration(5000) * time.Millisecond,
+	// 			}
 
-				return d.DialContext(ctx, "udp", "8.8.8.8:53")
-			},
-		},
-	}
+	// 			return d.DialContext(ctx, "udp", "8.8.8.8:53")
+	// 		},
+	// 	},
+	// }
 
-	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
-		conn, err := dialer.DialContext(ctx, network, addr)
-		if err != nil {
-			return nil, err
-		}
-		return conn, nil
-	}
+	// dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+	// 	conn, err := dialer.DialContext(ctx, network, addr)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return conn, nil
+	// }
 
-	transport := &http.Transport{
-		DisableKeepAlives: true,
-		DialContext:       dialContext,
-	}
+	// transport := &http.Transport{
+	// 	DisableKeepAlives: true,
+	// 	DialContext:       dialContext,
+	// }
 
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   15 * time.Second,
-	}
+	// client := &http.Client{
+	// 	Transport: transport,
+	// 	Timeout:   15 * time.Second,
+	// }
 
-	for range ticker.C {
-		resp, err := client.Get(url)
-		if err != nil {
-			fmt.Printf(".")
-			continue
-		}
+	// for range ticker.C {
+	// 	resp, err := client.Get(url)
+	// 	if err != nil {
+	// 		fmt.Printf(".")
+	// 		continue
+	// 	}
 
-		if resp.StatusCode != http.StatusOK {
-			fmt.Printf(".")
-			resp.Body.Close()
-			continue
-		}
+	// 	if resp.StatusCode != http.StatusOK {
+	// 		fmt.Printf(".")
+	// 		resp.Body.Close()
+	// 		continue
+	// 	}
 
-		resp.Body.Close()
-		message := fmt.Sprintf("BPB panel is ready -> %s", url)
-		successMessage(message)
-		fmt.Print("\n")
-		prompt := fmt.Sprintf("Would you like to open %s in browser? (y/n): ", fmtStr("BPB panel", BLUE, true))
+	// 	resp.Body.Close()
+	message := fmt.Sprintf("BPB panel is ready -> %s", fmtStr(url, BLUE, true))
+	successMessage(message)
+	fmt.Print("\n")
+	prompt := fmt.Sprintf("Would you like to open %s in browser? (y/n): ", fmtStr("BPB panel", BLUE, true))
 
-		if response := promptUser(prompt); strings.ToLower(response) == "n" {
-			return nil
-		}
-
-		if err = openURL(url); err != nil {
-			return err
-		}
-
+	if response := promptUser(prompt); strings.ToLower(response) == "n" {
 		return nil
 	}
 
+	if err := openURL(url); err != nil {
+		return err
+	}
+
 	return nil
+	// }
+
+	// return nil
 }
 
 func runWizard() {
