@@ -133,42 +133,56 @@ func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
 	return body.Bytes(), writer.FormDataContentType(), nil
 }
 
-func createWorker(ctx context.Context, name string, uid string, pass string, proxy string, fallback string, sub string, kv *kv.Namespace) (*workers.ScriptUpdateResponse, error) {
+func createWorker(ctx context.Context, name string, uid string, pass string, proxy string, nat64Prefix string, fallback string, sub string, kv *kv.Namespace) (*workers.ScriptUpdateResponse, error) {
+
+	envVars := []map[string]string{
+		{
+			"name":         "kv",
+			"namespace_id": kv.ID,
+			"type":         "kv_namespace",
+		},
+		{
+			"name": "UUID",
+			"text": uid,
+			"type": "plain_text",
+		},
+		{
+			"name": "TR_PASS",
+			"text": pass,
+			"type": "plain_text",
+		},
+		{
+			"name": "FALLBACK",
+			"text": fallback,
+			"type": "plain_text",
+		},
+		{
+			"name": "SUB_PATH",
+			"text": sub,
+			"type": "plain_text",
+		},
+	}
+
+	if proxy != "" {
+		envVars = append(envVars, map[string]string{
+			"name": "PROXY_IP",
+			"text": proxy,
+			"type": "plain_text",
+		})
+	}
+
+	if nat64Prefix != "" {
+		envVars = append(envVars, map[string]string{
+			"name": "NAT64_PREFIX",
+			"text": nat64Prefix,
+			"type": "plain_text",
+		})
+	}
+
 	param := ScriptUpdateParams{
 		AccountID: cfAccount.ID,
 		Metadata: ScriptUpdateParamsMetadataForm{
-			Bindings: []map[string]string{
-				{
-					"name":         "kv",
-					"namespace_id": kv.ID,
-					"type":         "kv_namespace",
-				},
-				{
-					"name": "UUID",
-					"text": uid,
-					"type": "plain_text",
-				},
-				{
-					"name": "TR_PASS",
-					"text": pass,
-					"type": "plain_text",
-				},
-				{
-					"name": "PROXY_IP",
-					"text": proxy,
-					"type": "plain_text",
-				},
-				{
-					"name": "FALLBACK",
-					"text": fallback,
-					"type": "plain_text",
-				},
-				{
-					"name": "SUB_PATH",
-					"text": sub,
-					"type": "plain_text",
-				},
-			},
+			Bindings:          envVars,
 			MainModule:        "worker.js",
 			jsPath:            workerPath,
 			CompatibilityDate: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
@@ -337,6 +351,7 @@ func deployWorker(
 	uid string,
 	pass string,
 	proxy string,
+	nat64Prefix string,
 	fallback string,
 	sub string,
 	kvNamespace *kv.Namespace,
@@ -348,7 +363,7 @@ func deployWorker(
 	for {
 		fmt.Printf("\n%s Creating Worker...\n", title)
 
-		_, err := createWorker(ctx, name, uid, pass, proxy, fallback, sub, kvNamespace)
+		_, err := createWorker(ctx, name, uid, pass, proxy, nat64Prefix, fallback, sub, kvNamespace)
 		if err != nil {
 			failMessage("Failed to deploy worker.")
 			log.Printf("%v\n\n", err)

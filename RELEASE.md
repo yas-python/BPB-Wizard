@@ -1,5 +1,8 @@
 # ⚙️ Bug fixes and Improvements
 
-- Added version manager, no need to download wizard every time running script
-- Migrate to Go v1.24.4
-- Revised build workflow
+- Display Panel address after deployment instead of checking final URL
+- Revised build flags to reduce chance of false positive
+- Added NAT64 prefixes support
+- Data entry validation bug fix
+- Switched to Go 1.25
+- Updated packages
