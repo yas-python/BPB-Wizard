@@ -93,6 +93,7 @@ func createPagesProject(
 	uid string,
 	pass string,
 	proxy string,
+	nat64Prefix string,
 	fallback string,
 	sub string,
 	kv *kv.Namespace,
@@ -100,6 +101,39 @@ func createPagesProject(
 	*pages.Project,
 	error,
 ) {
+	envVars := map[string]pages.ProjectDeploymentConfigsProductionEnvVarsUnionParam{
+		"UUID": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(uid),
+		},
+		"TR_PASS": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(pass),
+		},
+		"FALLBACK": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(fallback),
+		},
+		"SUB_PATH": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(sub),
+		},
+	}
+
+	if proxy != "" {
+		envVars["PROXY_IP"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(proxy),
+		}
+	}
+
+	if nat64Prefix != "" {
+		envVars["NAT64_PREFIX"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
+			Value: cf.F(nat64Prefix),
+		}
+	}
+
 	project, err := cfClient.Pages.Projects.New(
 		ctx,
 		pages.ProjectNewParams{
@@ -117,28 +151,7 @@ func createPagesProject(
 								NamespaceID: cf.F(kv.ID),
 							},
 						}),
-						EnvVars: cf.F(map[string]pages.ProjectDeploymentConfigsProductionEnvVarsUnionParam{
-							"UUID": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-								Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-								Value: cf.F(uid),
-							},
-							"TR_PASS": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-								Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-								Value: cf.F(pass),
-							},
-							"PROXY_IP": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-								Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-								Value: cf.F(proxy),
-							},
-							"FALLBACK": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-								Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-								Value: cf.F(fallback),
-							},
-							"SUB_PATH": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-								Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-								Value: cf.F(sub),
-							},
-						}),
+						EnvVars: cf.F(envVars),
 					}),
 				}),
 			},
@@ -346,6 +359,7 @@ func deployPagesProject(
 	uid string,
 	pass string,
 	proxy string,
+	nat64Prefix string,
 	fallback string,
 	sub string,
 	kvNamespace *kv.Namespace,
@@ -360,7 +374,7 @@ func deployPagesProject(
 	for {
 		fmt.Printf("\n%s Creating Pages project...\n", title)
 
-		project, err = createPagesProject(ctx, name, uid, pass, proxy, fallback, sub, kvNamespace)
+		project, err = createPagesProject(ctx, name, uid, pass, proxy, nat64Prefix, fallback, sub, kvNamespace)
 		if err != nil {
 			failMessage("Failed to create project.")
 			log.Printf("%v\n\n", err)

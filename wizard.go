@@ -141,12 +141,22 @@ func isValidSubDomain(subDomain string) error {
 }
 
 func isValidIpDomain(value string) bool {
-	if net.ParseIP(value) != nil {
+	if net.ParseIP(value) != nil && !strings.Contains(value, ":") {
+		return true
+	}
+
+	if isValidIPv6(value) {
 		return true
 	}
 
 	domainRegex := regexp.MustCompile(DomainRegex)
 	return domainRegex.MatchString(value)
+}
+
+func isValidIPv6(value string) bool {
+	regex := regexp.MustCompile(`^\[(.+)\]$`)
+	matches := regex.FindStringSubmatch(value)
+	return matches != nil && net.ParseIP(matches[1]) != nil
 }
 
 func isValidHost(value string) bool {
@@ -155,8 +165,7 @@ func isValidHost(value string) bool {
 		return false
 	}
 
-	domainRegex := regexp.MustCompile(DomainRegex)
-	if net.ParseIP(host) == nil && !domainRegex.MatchString(host) {
+	if !isValidIpDomain(host) {
 		return false
 	}
 
@@ -441,8 +450,8 @@ func createPanel() {
 		break
 	}
 
-	proxyIP := "bpb.yousef.isegaro.com"
-	fmt.Printf("\n%s The default %s is: %s\n", info, fmtStr("Proxy IP", GREEN, true), fmtStr(proxyIP, ORANGE, true))
+	proxyIP := ""
+	fmt.Printf("\n%s The default %s is: %s\n", info, fmtStr("Proxy IP", GREEN, true), fmtStr("bpb.yousef.isegaro.com", ORANGE, true))
 	for {
 		if response := promptUser("Please enter custom Proxy IP/Domains or press ENTER to use default: "); response != "" {
 			areValid := true
@@ -461,6 +470,31 @@ func createPanel() {
 			}
 
 			proxyIP = response
+		}
+
+		break
+	}
+
+	nat64Prefix := ""
+	fmt.Printf("\n%s The default %s are listed here: %s\n", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/src/protocols/NAT64Prefixes.md", ORANGE, true))
+	for {
+		if response := promptUser("Please enter custom NAT64 Prefixes or press ENTER to use default: "); response != "" {
+			areValid := true
+			values := strings.SplitSeq(response, ",")
+			for v := range values {
+				trimmedValue := strings.TrimSpace(v)
+				if !isValidIPv6(trimmedValue) {
+					areValid = false
+					message := fmt.Sprintf("%s is not a valid IPv6 address. Please try again.", trimmedValue)
+					failMessage(message)
+				}
+			}
+
+			if !areValid {
+				continue
+			}
+
+			nat64Prefix = response
 		}
 
 		break
@@ -521,9 +555,9 @@ func createPanel() {
 
 	switch deployType {
 	case DTWorker:
-		panel, err = deployWorker(ctx, projectName, uid, trPass, proxyIP, fallback, subPath, kvNamespace, customDomain)
+		panel, err = deployWorker(ctx, projectName, uid, trPass, proxyIP, nat64Prefix, fallback, subPath, kvNamespace, customDomain)
 	case DTPage:
-		panel, err = deployPagesProject(ctx, projectName, uid, trPass, proxyIP, fallback, subPath, kvNamespace, customDomain)
+		panel, err = deployPagesProject(ctx, projectName, uid, trPass, proxyIP, nat64Prefix, fallback, subPath, kvNamespace, customDomain)
 	}
 
 	if err != nil {
