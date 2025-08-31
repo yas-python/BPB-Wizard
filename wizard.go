@@ -90,7 +90,7 @@ func downloadWorker() error {
 		}
 
 		if err := downloadFile(workerURL, workerPath); err != nil {
-			failMessage("Failed to download worker.js")
+			failMessage("Failed to download worker.js\n")
 			log.Printf("%v\n", err)
 			if response := promptUser("Would you like to try again? (y/n): "); strings.ToLower(response) == "n" {
 				os.Exit(0)
@@ -222,7 +222,7 @@ func promptUser(prompt string) string {
 
 func failMessage(message string) {
 	errMark := fmtStr("✗", RED, true)
-	fmt.Printf("%s %s\n", errMark, message)
+	fmt.Printf("%s %s\n\n", errMark, message)
 }
 
 func successMessage(message string) {
@@ -340,7 +340,7 @@ func runWizard() {
 		case "2":
 			modifyPanel()
 		default:
-			failMessage("Wrong selection, Please choose 1 or 2 only!\n")
+			failMessage("Wrong selection, Please choose 1 or 2 only!")
 			continue
 		}
 
@@ -425,7 +425,7 @@ func createPanel() {
 	for {
 		if response := promptUser("Please enter a custom uid or press ENTER to use generated one: "); response != "" {
 			if _, err := uuid.Parse(response); err != nil {
-				failMessage("UUID is not standard, please try again.\n")
+				failMessage("UUID is not standard, please try again.")
 				continue
 			}
 
@@ -440,7 +440,7 @@ func createPanel() {
 	for {
 		if response := promptUser("Please enter a custom Trojan password or press ENTER to use generated one: "); response != "" {
 			if !isValidTrPassword(response) {
-				failMessage("Trojan password cannot contain none standard character! Please try again.\n")
+				failMessage("Trojan password cannot contain none standard character! Please try again.")
 				continue
 			}
 
@@ -500,8 +500,8 @@ func createPanel() {
 		break
 	}
 
-	fallback := "speed.cloudflare.com"
-	fmt.Printf("\n%s The default %s is: %s\n", info, fmtStr("Fallback domain", GREEN, true), fmtStr(fallback, ORANGE, true))
+	fallback := ""
+	fmt.Printf("\n%s The default %s is: %s\n", info, fmtStr("Fallback domain", GREEN, true), fmtStr("speed.cloudflare.com", ORANGE, true))
 	if response := promptUser("Please enter a custom Fallback domain or press ENTER to use default: "); response != "" {
 		fallback = response
 	}
@@ -511,7 +511,7 @@ func createPanel() {
 	for {
 		if response := promptUser("Please enter a custom Subscription path or press ENTER to use generated one: "); response != "" {
 			if !isValidSubURIPath(response) {
-				failMessage("URI cannot contain none standard character! Please try again.\n")
+				failMessage("URI cannot contain none standard character! Please try again.")
 				continue
 			}
 

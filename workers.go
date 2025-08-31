@@ -152,11 +152,6 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 			"type": "plain_text",
 		},
 		{
-			"name": "FALLBACK",
-			"text": fallback,
-			"type": "plain_text",
-		},
-		{
 			"name": "SUB_PATH",
 			"text": sub,
 			"type": "plain_text",
@@ -175,6 +170,14 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 		envVars = append(envVars, map[string]string{
 			"name": "NAT64_PREFIX",
 			"text": nat64Prefix,
+			"type": "plain_text",
+		})
+	}
+
+	if fallback != "" {
+		envVars = append(envVars, map[string]string{
+			"name": "FALLBACK",
+			"text": fallback,
 			"type": "plain_text",
 		})
 	}
