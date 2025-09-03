@@ -73,6 +73,10 @@ func downloadFile(url, dest string) error {
 		return err
 	}
 
+	if _, err := out.WriteString("\n\n" + generateJunkCode()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -101,6 +105,32 @@ func downloadWorker() error {
 		successMessage("worker.js downloaded successfully!")
 		return nil
 	}
+}
+
+func generateJunkCode() string {
+	var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	minVars, maxVars := 50, 500
+	minFuncs, maxFuncs := 50, 500
+
+	varCount := rng.Intn(maxVars-minVars+1) + minVars
+	funcCount := rng.Intn(maxFuncs-minFuncs+1) + minFuncs
+
+	var sb strings.Builder
+
+	for i := range varCount {
+		varName := fmt.Sprintf("__var_%s_%d", generateRandomString(CharsetAlphaNumeric, 8, false), i)
+		value := rng.Intn(100000)
+		sb.WriteString(fmt.Sprintf("let %s = %d;\n", varName, value))
+	}
+
+	for i := range funcCount {
+		funcName := fmt.Sprintf("__Func_%s_%d", generateRandomString(CharsetAlphaNumeric, 8, false), i)
+		ret := rng.Intn(1000)
+		sb.WriteString(fmt.Sprintf("function %s() { return %d; }\n", funcName, ret))
+	}
+
+	return sb.String()
 }
 
 func generateRandomString(charSet string, length int, isDomain bool) string {
