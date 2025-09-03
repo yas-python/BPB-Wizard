@@ -562,7 +562,7 @@ func createPanel() {
 
 	for {
 		now := time.Now().Format("2006-01-02_15-04-05")
-		kvName := fmt.Sprintf("panel-kv-%s", now)
+		kvName := fmt.Sprintf("kv-%s", now)
 		kvNamespace, err = createKVNamespace(ctx, kvName)
 		if err != nil {
 			failMessage("Failed to create KV.")
