@@ -73,7 +73,7 @@ func downloadFile(url, dest string) error {
 		return err
 	}
 
-	if _, err := out.WriteString("\n\n" + generateJunkCode()); err != nil {
+	if _, err := out.WriteString(generateJunkCode()); err != nil {
 		return err
 	}
 
@@ -121,13 +121,13 @@ func generateJunkCode() string {
 	for i := range varCount {
 		varName := fmt.Sprintf("__var_%s_%d", generateRandomString(CharsetAlphaNumeric, 8, false), i)
 		value := rng.Intn(100000)
-		sb.WriteString(fmt.Sprintf("let %s = %d;\n", varName, value))
+		sb.WriteString(fmt.Sprintf("let %s = %d; ", varName, value))
 	}
 
 	for i := range funcCount {
 		funcName := fmt.Sprintf("__Func_%s_%d", generateRandomString(CharsetAlphaNumeric, 8, false), i)
 		ret := rng.Intn(1000)
-		sb.WriteString(fmt.Sprintf("function %s() { return %d; }\n", funcName, ret))
+		sb.WriteString(fmt.Sprintf("function %s() { return %d; } ", funcName, ret))
 	}
 
 	return sb.String()
