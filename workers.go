@@ -168,7 +168,7 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 
 	if nat64Prefix != "" {
 		envVars = append(envVars, map[string]string{
-			"name": "NAT64_PREFIX",
+			"name": "PREFIX",
 			"text": nat64Prefix,
 			"type": "plain_text",
 		})

@@ -124,7 +124,7 @@ func createPagesProject(
 	}
 
 	if nat64Prefix != "" {
-		envVars["NAT64_PREFIX"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
+		envVars["PREFIX"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
 			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
 			Value: cf.F(nat64Prefix),
 		}
