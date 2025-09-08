@@ -506,7 +506,7 @@ func createPanel() {
 	}
 
 	nat64Prefix := ""
-	fmt.Printf("\n%s The default %s are listed here: %s\n", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/src/protocols/NAT64Prefixes.md", ORANGE, true))
+	fmt.Printf("\n%s The default %s are listed here: %s\n", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/NAT64Prefixes.md", ORANGE, true))
 	for {
 		if response := promptUser("Please enter custom NAT64 Prefixes or press ENTER to use default: "); response != "" {
 			areValid := true
