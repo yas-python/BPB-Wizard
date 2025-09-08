@@ -22,6 +22,9 @@ To use this method, all you need is a Cloudflare account. You can [sign up here]
 
 Based on your operating system, [download the ZIP file](https://github.com/bia-pain-bache/BPB-Wizard/releases/latest), unzip it, and run the program.
 
+> [!IMPORTANT]  
+> This program downloads `worker.js` from github to deploy to Cloudflare and is not signed by a certificate. This makes Anti Viruses detect it as some kind of Trojan/Downloader threat. You have to disable your Anti Virus before running the program.
+
 #### Android (Termux) - Linux
 
 Android users who have Termux installed on their device and Linux users can use this bash:
