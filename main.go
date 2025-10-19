@@ -12,15 +12,11 @@ import (
 )
 
 var (
-	srcPath    string
-	workerPath string
-	cachePath  string
-	isAndroid  = false
-	workerURL  = "https://raw.githubusercontent.com/yas-python/zizifn/main/_worker.js"
-	VERSION    = "dev"
+	workerURL = "https://raw.githubusercontent.com/yas-python/zizifn/main/_worker.js"
 )
 
 func init() {
+	// parse flags
 	showVersion := flag.Bool("version", false, "Show version")
 	flag.Parse()
 	if *showVersion {
@@ -28,20 +24,27 @@ func init() {
 		os.Exit(0)
 	}
 
+	// initialize globals, paths, DNS, Android checks
+	initGlobals()
 	initPaths()
 	setDNS()
 	checkAndroid()
 }
 
 func main() {
+	// render ASCII header
+	renderHeader()
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 
+	// run the wizard in a goroutine
 	go func() {
 		defer wg.Done()
 		runWizard()
 	}()
 
+	// start local HTTP server for OAuth callback
 	server := &http.Server{Addr: ":8976"}
 	http.HandleFunc("/oauth/callback", callback)
 
@@ -52,10 +55,12 @@ func main() {
 		}
 	}()
 
+	// wait for wizard to finish
 	wg.Wait()
+
+	// graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	if err := server.Shutdown(ctx); err != nil {
 		log.Printf("Server forced to shutdown: %v", err)
 	}
