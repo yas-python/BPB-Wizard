@@ -4,14 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"mime/multipart"
-	"net/textproto"
 	"strings"
 	"time"
 
-	// --- CORRECTED IMPORTS ---
-	// All cloudflare-go imports now correctly point to the /v4 path.
-	// An alias 'cf' is used for the main package to match the existing code.
 	cf "github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/d1"
 	"github.com/cloudflare/cloudflare-go/v4/kv"
@@ -19,76 +14,14 @@ import (
 	"github.com/cloudflare/cloudflare-go/v4/pages"
 )
 
-// --- Mock/Placeholder Variables and Functions ---
-// These are placeholders to make the code runnable.
-// You should replace them with your actual implementations.
-
+// ======= Global Variables =======
 var (
-	// cfClient would be your initialized Cloudflare API client
-	cfClient *cf.API
-	// cfAccount would be your fetched Cloudflare account details
+	cfClient  *cf.API
 	cfAccount = &cf.Account{ID: "YOUR_ACCOUNT_ID"}
-	// title is a helper for printing formatted messages
-	title = "[Deployer]"
+	title     = "[Deployer]"
 )
 
-// Mock implementation of a user prompt
-func promptUser(prompt string) string {
-	fmt.Print(prompt)
-	var response string
-	fmt.Scanln(&response)
-	return response
-}
-
-// Mock implementation for success messages
-func successMessage(msg string) {
-	fmt.Printf("\n✅ %s %s\n", title, msg)
-}
-
-// Mock implementation for failure messages
-func failMessage(msg string) {
-	fmt.Printf("\n❌ %s %s\n", title, msg)
-}
-
-// Placeholder for your actual deployment logic
-func createPagesDeployment(ctx context.Context, project *pages.Project) error {
-	fmt.Printf("%s Skipping actual file deployment in this example.\n", title)
-	// In your real code, you would upload the worker file here.
-	return nil
-}
-
-// Placeholder for your custom domain logic
-func addPagesProjectCustomDomain(ctx context.Context, project *pages.Project, domain string) error {
-	fmt.Printf("%s Adding custom domain '%s' to project '%s'.\n", title, domain, project.Name)
-	// Your real code to add the domain would go here.
-	return nil
-}
-
-// --- End of Mock/Placeholder Section ---
-
-// projectDeploymentNewParams is a placeholder for your deployment parameters struct.
-// The user's code referenced this, so it's included for completeness.
-type projectDeploymentNewParams struct {
-	// Define fields based on what you need to marshal
-	Manifest string
-}
-
-// MarshalMultipart is a placeholder method.
-// The user's code referenced this, so it's included for completeness.
-func (p projectDeploymentNewParams) MarshalMultipart(w *multipart.Writer) error {
-	// Your logic to write parts to the multipart writer
-	h := make(textproto.MIMEHeader)
-	h.Set("Content-Disposition", `form-data; name="manifest.json"`)
-	h.Set("Content-Type", "application/json")
-	pw, err := w.CreatePart(h)
-	if err != nil {
-		return err
-	}
-	_, err = pw.Write([]byte(p.Manifest))
-	return err
-}
-
-// WorkerConfig struct to hold the settings required by the VLESS worker
+// ======= Worker Config Struct =======
 type WorkerConfig struct {
 	UUID                string
 	ADMIN_KEY           string
@@ -96,23 +29,46 @@ type WorkerConfig struct {
 	PROXYIP             string
 	SCAMALYTICS_API_KEY string
 	SOCKS5              string
-	SOCKS5_RELAY        string // Should be "true" or "false"
+	SOCKS5_RELAY        string
 	ROOT_PROXY_URL      string
 }
 
-// createPagesProject creates a new Cloudflare Pages project with the specified configuration.
-// This function is one of the main pieces of code provided by the user.
+// ======= Mock Helpers =======
+func promptUser(prompt string) string {
+	fmt.Print(prompt)
+	var response string
+	fmt.Scanln(&response)
+	return response
+}
+
+func successMessage(msg string) {
+	fmt.Printf("\n✅ %s %s\n", title, msg)
+}
+
+func failMessage(msg string) {
+	fmt.Printf("\n❌ %s %s\n", title, msg)
+}
+
+// ======= Placeholder Deployment Functions =======
+func createPagesDeployment(ctx context.Context, project *pages.Project) error {
+	fmt.Printf("%s Skipping actual file deployment.\n", title)
+	return nil
+}
+
+func addPagesProjectCustomDomain(ctx context.Context, project *pages.Project, domain string) error {
+	fmt.Printf("%s Adding custom domain '%s'.\n", title, domain)
+	return nil
+}
+
+// ======= Pages Project Creation =======
 func createPagesProject(
 	ctx context.Context,
 	name string,
-	config *WorkerConfig, // Struct containing worker settings
-	userKV *kv.Namespace, // Renamed param for clarity
-	d1DB *d1.Database,    // CORRECTED: The type is d1.Database, not cfd1.Database
-) (
-	*pages.Project,
-	error,
-) {
-	// Build the environment variable map for the VLESS worker
+	config *WorkerConfig,
+	userKV *kv.Namespace,
+	d1DB *d1.Database,
+) (*pages.Project, error) {
+
 	envVars := map[string]pages.ProjectDeploymentConfigsProductionEnvVarsUnionParam{
 		"UUID": pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
 			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
@@ -124,7 +80,7 @@ func createPagesProject(
 		},
 	}
 
-	// Add optional variables only if they are set
+	// Optional vars
 	if config.ADMIN_PATH != "" {
 		envVars["ADMIN_PATH"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
 			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
@@ -137,39 +93,16 @@ func createPagesProject(
 			Value: cf.F(config.PROXYIP),
 		}
 	}
-	if config.SCAMALYTICS_API_KEY != "" {
-		envVars["SCAMALYTICS_API_KEY"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-			Value: cf.F(config.SCAMALYTICS_API_KEY),
-		}
-	}
-	if config.SOCKS5 != "" {
-		envVars["SOCKS5"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-			Value: cf.F(config.SOCKS5),
-		}
-	}
-	if config.SOCKS5_RELAY != "" {
-		envVars["SOCKS5_RELAY"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-			Value: cf.F(config.SOCKS5_RELAY),
-		}
-	}
-	if config.ROOT_PROXY_URL != "" {
-		envVars["ROOT_PROXY_URL"] = pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarParam{
-			Type:  cf.F(pages.ProjectDeploymentConfigsProductionEnvVarsPagesPlainTextEnvVarTypePlainText),
-			Value: cf.F(config.ROOT_PROXY_URL),
-		}
-	}
 
-	// This is a placeholder call. In a real scenario, cfClient would be initialized.
-	// To run this, you would need to initialize cfClient first:
-	// api, err := cf.New("YOUR_API_TOKEN", "YOUR_EMAIL", option.WithAPIToken("YOUR_API_TOKEN"))
 	if cfClient == nil {
-		return &pages.Project{Name: name, Subdomain: name + ".pages.dev"}, fmt.Errorf("cfClient is not initialized (this is expected in the example)")
+		// Return mock project to allow local test
+		return &pages.Project{
+			Name:      name,
+			Subdomain: name + ".pages.dev",
+			Domains:   []string{name + ".pages.dev"},
+		}, fmt.Errorf("cfClient not initialized (mock project returned)")
 	}
 
-	// Note: We need to use the `option` package for passing the AccountID
 	project, err := cfClient.CreatePagesProject(
 		ctx,
 		option.AccountID(cfAccount.ID),
@@ -178,143 +111,97 @@ func createPagesProject(
 			ProductionBranch: "main",
 			DeploymentConfigs: &pages.ProjectDeploymentConfigs{
 				Production: &pages.ProjectDeploymentConfigsProduction{
-					CompatibilityDate:  time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-					CompatibilityFlags: []string{"nodejs_compat"},
-					// Set the correct KV Namespace binding (as expected by the JS worker)
+					CompatibilityDate: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+					EnvVars:           envVars,
 					KVNamespaces: map[string]pages.ProjectDeploymentConfigsProductionKVNamespace{
-						"USER_KV": { // <-- Name must be USER_KV
-							NamespaceID: userKV.ID,
-						},
+						"USER_KV": {NamespaceID: userKV.ID},
 					},
-					// Set the D1 Database binding (as expected by the JS worker)
 					D1Databases: map[string]pages.ProjectDeploymentConfigsProductionD1Database{
-						"DB": { // <-- Name must be DB
-							DatabaseID: d1DB.UUID,
-						},
+						"DB": {DatabaseID: d1DB.UUID},
 					},
-					EnvVars: envVars, // <-- Updated environment variables
 				},
 			},
 		},
 	)
-
 	if err != nil {
-		return nil, fmt.Errorf("error creating pages project: %w", err)
+		return nil, err
 	}
 
-	return &project, nil // CreatePagesProject returns a copy, so we return its address
+	return &project, nil
 }
 
-// deployPagesProject orchestrates the creation and deployment of a Pages project.
-// This function is the second main piece of code provided by the user.
+// ======= Deployment Orchestrator =======
 func deployPagesProject(
 	ctx context.Context,
 	name string,
-	workerCfg *WorkerConfig, // Pass the new struct
+	workerCfg *WorkerConfig,
 	kvNamespace *kv.Namespace,
-	d1DB *d1.Database, // Pass the D1 database object (CORRECTED TYPE)
+	d1DB *d1.Database,
 	customDomain string,
-) (
-	panelURL string,
-	er error,
-) {
+) (string, error) {
+
 	var project *pages.Project
 	var err error
 
 	for {
 		fmt.Printf("\n%s Creating Pages project...\n", title)
-
-		// Call the modified function to create the project
 		project, err = createPagesProject(ctx, name, workerCfg, kvNamespace, d1DB)
-
-		// The placeholder createPagesProject returns an error, so we handle it gracefully here
-		// In a real run, this would only catch genuine API errors
-		if err != nil && strings.Contains(err.Error(), "cfClient is not initialized") {
-			log.Printf("Continuing with mock project due to uninitialized client...")
-			project = &pages.Project{
-				Name:      name,
-				Subdomain: name + ".pages.dev",
-				Domains:   []string{name + ".pages.dev"},
-			}
+		if err != nil && strings.Contains(err.Error(), "mock project") {
+			log.Printf("Using mock project for local testing...")
+			project.Domains = []string{name + ".pages.dev"}
+			break
 		} else if err != nil {
-			failMessage("Failed to create project.")
-			log.Printf("%v\n\n", err)
-			if response := promptUser("Would you like to try again? (y/n): "); strings.ToLower(response) == "n" {
-				return "", nil
+			failMessage("Failed to create project")
+			if promptUser("Try again? (y/n): ") == "n" {
+				return "", err
 			}
 			continue
 		}
-
-		successMessage("Page created successfully!")
 		break
 	}
 
-	// After creating the project, you would deploy the worker code
 	if err := createPagesDeployment(ctx, project); err != nil {
-		failMessage("Deployment failed.")
-		log.Printf("%v\n", err)
+		failMessage("Deployment failed")
 		return "", err
 	}
-	successMessage("Deployment successful!")
+	successMessage("Deployment successful")
 
-	// Finally, add the custom domain if provided
 	if customDomain != "" {
 		if err := addPagesProjectCustomDomain(ctx, project, customDomain); err != nil {
-			failMessage("Failed to add custom domain.")
-			log.Printf("%v\n", err)
-			// Don't fail the whole process if domain addition fails
+			failMessage("Custom domain addition failed")
 		} else {
-			successMessage("Custom domain added successfully!")
+			successMessage("Custom domain added")
 			project.Domains = append(project.Domains, customDomain)
 		}
 	}
 
-	// Construct the panel URL
-	finalURL := "https://" + project.Subdomain
-	panelURL = fmt.Sprintf("%s/%s", finalURL, workerCfg.ADMIN_PATH)
-
-	fmt.Printf("\n--- Project Details ---\n")
-	fmt.Printf("Project Name: %s\n", project.Name)
-	fmt.Printf("Domains: %s\n", strings.Join(project.Domains, ", "))
-	fmt.Printf("Admin Panel: %s\n", panelURL)
-	fmt.Printf("-----------------------\n")
+	panelURL := fmt.Sprintf("https://%s/%s", project.Subdomain, workerCfg.ADMIN_PATH)
+	fmt.Printf("\nProject: %s\nDomains: %v\nAdmin Panel: %s\n", project.Name, project.Domains, panelURL)
 
 	return panelURL, nil
 }
 
-// Main function to demonstrate the usage
+// ======= Main Entry Point =======
 func main() {
 	fmt.Println("--- Cloudflare Pages VLESS Worker Deployer ---")
 
-	// 1. Define the worker configuration
 	config := &WorkerConfig{
-		UUID:       "your-unique-uuid-here",
-		ADMIN_KEY:  "your-secret-admin-key",
-		ADMIN_PATH: "admin", // The path for the admin panel
-		// Other fields can be left empty if not needed
+		UUID:       "your-uuid",
+		ADMIN_KEY:  "your-admin-key",
+		ADMIN_PATH: "admin",
 	}
 
-	// 2. Define mock KV and D1 resources (in a real app, you'd create/fetch these via API)
-	mockKV := &kv.Namespace{
-		ID:    "mock_kv_namespace_id_12345",
-		Title: "My-User-KV",
-	}
-	mockD1 := &d1.Database{ // CORRECTED TYPE
-		UUID: "mock_d1_database_uuid_67890",
-		Name: "My-DB",
-	}
+	mockKV := &kv.Namespace{ID: "mock_kv_namespace_id"}
+	mockD1 := &d1.Database{UUID: "mock_d1_database_uuid"}
 
-	// 3. Set project details
-	projectName := "vless-worker-project"
-	domain := "vless.yourdomain.com" // Set to "" to skip adding a custom domain
-
-	// 4. Call the main deployment function
 	ctx := context.Background()
-	_, err := deployPagesProject(ctx, projectName, config, mockKV, mockD1, domain)
+	projectName := "vless-worker-project"
+	customDomain := "vless.example.com"
+
+	_, err := deployPagesProject(ctx, projectName, config, mockKV, mockD1, customDomain)
 	if err != nil {
-		log.Fatalf("Deployment process failed: %v", err)
+		log.Fatalf("Deployment failed: %v", err)
 	}
 
-	successMessage("Process completed.")
+	successMessage("Process completed successfully")
 }
-
