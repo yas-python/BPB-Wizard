@@ -16,7 +16,7 @@ var (
 	workerPath string
 	cachePath  string
 	isAndroid  = false
-	workerURL  = "https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
+	workerURL  = "https://raw.githubusercontent.com/yas-python/zizifn/main/_worker.js"
 	VERSION    = "dev"
 )
 
