@@ -39,6 +39,16 @@ var (
 	warning    string
 )
 
+// =====================
+// Initialization
+// =====================
+func init() {
+	initGlobals()
+	checkAndroid()
+	setDNS()
+	initPaths()
+}
+
 // initGlobals initializes global variables that use fmtStr
 func initGlobals() {
 	title = fmtStr("●", BLUE, true)
@@ -47,7 +57,7 @@ func initGlobals() {
 	warning = fmtStr("Warning", RED, true)
 }
 
-// checkAndroid detects Termux/Android and sets SSL_CERT_FILE accordingly.
+// checkAndroid detects Termux/Android and sets SSL_CERT_FILE accordingly
 func checkAndroid() {
 	path := os.Getenv("PATH")
 	if runtime.GOOS == "android" || strings.Contains(path, "com.termux") {
@@ -61,7 +71,7 @@ func checkAndroid() {
 	}
 }
 
-// setDNS forces the default HTTP transport to use a custom DNS resolver (UDP 8.8.8.8:53)
+// setDNS forces the default HTTP transport to use a custom DNS resolver
 func setDNS() {
 	http.DefaultTransport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 		d := net.Dialer{
@@ -86,7 +96,7 @@ func setDNS() {
 	}
 }
 
-// initPaths creates a temporary workspace and defines worker/cache paths.
+// initPaths creates a temporary workspace and defines worker/cache paths
 func initPaths() {
 	var err error
 	srcPath, err = os.MkdirTemp("", ".bpb-wizard")
@@ -98,7 +108,7 @@ func initPaths() {
 	cachePath = filepath.Join(srcPath, "tld.cache")
 }
 
-// renderHeader prints an ASCII header with the current version.
+// renderHeader prints an ASCII header with the current version
 func renderHeader() {
 	fmt.Printf(`
 ■■■■■■■  ■■■■■■■  ■■■■■■■ 
@@ -124,4 +134,25 @@ func fmtStr(str string, color string, isBold bool) string {
 // failMessage prints an error prefix and the provided message
 func failMessage(msg string) {
 	fmt.Println(fmtStr("[ERROR]", RED, true), msg)
+}
+
+// successMessage prints a success prefix and the provided message
+func successMessage(msg string) {
+	fmt.Println(fmtStr("[SUCCESS]", GREEN, true), msg)
+}
+
+// =====================
+// Example Main
+// =====================
+func main() {
+	renderHeader()
+	successMessage("BPB-Wizard initialized successfully!")
+
+	// مثال ساده HTTP server (اختیاری)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "BPB-Wizard is running!")
+	})
+	port := "8976"
+	successMessage("Server listening on port " + port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
