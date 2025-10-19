@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	cf "github.com/cloudflare/cloudflare-go"
-	cfd1 "github.com/cloudflare/cloudflare-go/d1"
+    "github.com/cloudflare/cloudflare-go"
+    "github.com/cloudflare/cloudflare-go/d1"
 	"github.com/cloudflare/cloudflare-go/kv"
 	"github.com/cloudflare/cloudflare-go/option"
 	"github.com/cloudflare/cloudflare-go/pages"
