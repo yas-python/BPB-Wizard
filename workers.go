@@ -14,13 +14,12 @@ import (
 	"strings"
 	"time"
 
-	cf "github.com/cloudflare/cloudflare-go"
-	"github.com/cloudflare/cloudflare-go/d1"
-	"github.com/cloudflare/cloudflare-go/kv"
-	"github.com/cloudflare/cloudflare-go/option"
-	"github.com/cloudflare/cloudflare-go/workers"
-	"github.com/cloudflare/cloudflare-go/zones"
-	"github.com/joeguo/tldextract"
+	cf "github.com/cloudflare/cloudflare-go/v4"
+	"github.com.com/cloudflare/cloudflare-go/v4/d1"
+	"github.com/cloudflare/cloudflare-go/v4/kv"
+	"github.com/cloudflare/cloudflare-go/v4/option"
+	"github.com/cloudflare/cloudflare-go/v4/workers"
+	"github.com/cloudflare/cloudflare-go/v4/zones"
 )
 
 // Global variables for Cloudflare client and account details
