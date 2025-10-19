@@ -27,7 +27,7 @@ var (
 	info    = fmtStr("+", "", true)
 	warning = fmtStr("Warning", RED, true)
 )
-
+5
 func checkAndroid() {
 	path := os.Getenv("PATH")
 	if runtime.GOOS == "android" || strings.Contains(path, "com.termux") {

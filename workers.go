@@ -15,7 +15,7 @@ import (
 	"time"
 
 	cf "github.com/cloudflare/cloudflare-go/v4"
-	"github.com.com/cloudflare/cloudflare-go/v4/d1"
+	"github.com/cloudflare/cloudflare-go/v4/d1"
 	"github.com/cloudflare/cloudflare-go/v4/kv"
 	"github.com/cloudflare/cloudflare-go/v4/option"
 	"github.com/cloudflare/cloudflare-go/v4/workers"
