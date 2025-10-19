@@ -1,23 +1,22 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/textproto"
-	"os"
 	"strings"
 	"time"
 
-    "github.com/cloudflare/cloudflare-go"
-    "github.com/cloudflare/cloudflare-go/d1"
-	"github.com/cloudflare/cloudflare-go/kv"
-	"github.com/cloudflare/cloudflare-go/option"
-	"github.com/cloudflare/cloudflare-go/pages"
+	// --- CORRECTED IMPORTS ---
+	// All cloudflare-go imports now correctly point to the /v4 path.
+	// An alias 'cf' is used for the main package to match the existing code.
+	cf "github.com/cloudflare/cloudflare-go/v4"
+	"github.com/cloudflare/cloudflare-go/v4/d1"
+	"github.com/cloudflare/cloudflare-go/v4/kv"
+	"github.com/cloudflare/cloudflare-go/v4/option"
+	"github.com/cloudflare/cloudflare-go/v4/pages"
 )
 
 // --- Mock/Placeholder Variables and Functions ---
@@ -108,7 +107,7 @@ func createPagesProject(
 	name string,
 	config *WorkerConfig, // Struct containing worker settings
 	userKV *kv.Namespace, // Renamed param for clarity
-	d1DB *cfd1.Database,  // New parameter for the D1 binding
+	d1DB *d1.Database,    // CORRECTED: The type is d1.Database, not cfd1.Database
 ) (
 	*pages.Project,
 	error,
@@ -170,40 +169,40 @@ func createPagesProject(
 		return &pages.Project{Name: name, Subdomain: name + ".pages.dev"}, fmt.Errorf("cfClient is not initialized (this is expected in the example)")
 	}
 
-	project, err := cfClient.Pages.Projects.New(
+	// Note: We need to use the `option` package for passing the AccountID
+	project, err := cfClient.CreatePagesProject(
 		ctx,
-		pages.ProjectNewParams{
-			AccountID: cf.F(cfAccount.ID),
-			Project: pages.ProjectParam{
-				Name:             cf.F(name),
-				ProductionBranch: cf.F("main"),
-				DeploymentConfigs: cf.F(pages.ProjectDeploymentConfigsParam{
-					Production: cf.F(pages.ProjectDeploymentConfigsProductionParam{
-						CompatibilityDate:  cf.F(time.Now().AddDate(0, 0, -1).Format("2006-01-02")),
-						CompatibilityFlags: cf.F([]string{"nodejs_compat"}),
-						// Set the correct KV Namespace binding (as expected by the JS worker)
-						KVNamespaces: cf.F(map[string]pages.ProjectDeploymentConfigsProductionKVNamespaceParam{
-							"USER_KV": { // <-- Name must be USER_KV
-								NamespaceID: cf.F(userKV.ID),
-							},
-						}),
-						// Set the D1 Database binding (as expected by the JS worker)
-						D1Databases: cf.F(map[string]pages.ProjectDeploymentConfigsProductionD1DatabaseParam{
-							"DB": { // <-- Name must be DB
-								DatabaseID: cf.F(d1DB.UUID),
-							},
-						}),
-						EnvVars: cf.F(envVars), // <-- Updated environment variables
-					}),
-				}),
+		option.AccountID(cfAccount.ID),
+		pages.Project{
+			Name:             name,
+			ProductionBranch: "main",
+			DeploymentConfigs: &pages.ProjectDeploymentConfigs{
+				Production: &pages.ProjectDeploymentConfigsProduction{
+					CompatibilityDate:  time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+					CompatibilityFlags: []string{"nodejs_compat"},
+					// Set the correct KV Namespace binding (as expected by the JS worker)
+					KVNamespaces: map[string]pages.ProjectDeploymentConfigsProductionKVNamespace{
+						"USER_KV": { // <-- Name must be USER_KV
+							NamespaceID: userKV.ID,
+						},
+					},
+					// Set the D1 Database binding (as expected by the JS worker)
+					D1Databases: map[string]pages.ProjectDeploymentConfigsProductionD1Database{
+						"DB": { // <-- Name must be DB
+							DatabaseID: d1DB.UUID,
+						},
+					},
+					EnvVars: envVars, // <-- Updated environment variables
+				},
 			},
-		})
+		},
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating pages project: %w", err)
 	}
 
-	return project, nil
+	return &project, nil // CreatePagesProject returns a copy, so we return its address
 }
 
 // deployPagesProject orchestrates the creation and deployment of a Pages project.
@@ -213,7 +212,7 @@ func deployPagesProject(
 	name string,
 	workerCfg *WorkerConfig, // Pass the new struct
 	kvNamespace *kv.Namespace,
-	d1DB *cfd1.Database, // Pass the D1 database object
+	d1DB *d1.Database, // Pass the D1 database object (CORRECTED TYPE)
 	customDomain string,
 ) (
 	panelURL string,
@@ -300,7 +299,7 @@ func main() {
 		ID:    "mock_kv_namespace_id_12345",
 		Title: "My-User-KV",
 	}
-	mockD1 := &cfd1.Database{
+	mockD1 := &d1.Database{ // CORRECTED TYPE
 		UUID: "mock_d1_database_uuid_67890",
 		Name: "My-DB",
 	}
@@ -318,3 +317,4 @@ func main() {
 
 	successMessage("Process completed.")
 }
+
