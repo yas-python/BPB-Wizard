@@ -25,19 +25,27 @@ const (
 )
 
 // =====================
-// Global variables
+// Global variables (only declare once)
 // =====================
 var (
-	title      = fmtStr("●", BLUE, true)
-	ask        = fmtStr("-", "", true)
-	info       = fmtStr("+", "", true)
-	warning    = fmtStr("Warning", RED, true)
 	srcPath    string
 	workerPath string
 	cachePath  string
 	isAndroid  bool
-	VERSION    = "1.0.0" // default; override at build with -ldflags "-X main.VERSION=..."
+	VERSION    = "1.0.0" // override at build with -ldflags "-X main.VERSION=..."
+	title      string
+	ask        string
+	info       string
+	warning    string
 )
+
+// initGlobals initializes global variables that use fmtStr
+func initGlobals() {
+	title = fmtStr("●", BLUE, true)
+	ask = fmtStr("-", "", true)
+	info = fmtStr("+", "", true)
+	warning = fmtStr("Warning", RED, true)
+}
 
 // checkAndroid detects Termux/Android and sets SSL_CERT_FILE accordingly.
 func checkAndroid() {
@@ -53,8 +61,7 @@ func checkAndroid() {
 	}
 }
 
-// setDNS forces the default HTTP transport to use a custom DNS resolver (UDP 8.8.8.8:53).
-// This is helpful when system resolver is unreliable (or when behind VPNs).
+// setDNS forces the default HTTP transport to use a custom DNS resolver (UDP 8.8.8.8:53)
 func setDNS() {
 	http.DefaultTransport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 		d := net.Dialer{
@@ -87,7 +94,6 @@ func initPaths() {
 		failMessage("Failed to create temporary directory.")
 		log.Fatalln(err)
 	}
-
 	workerPath = filepath.Join(srcPath, "worker.js")
 	cachePath = filepath.Join(srcPath, "tld.cache")
 }
@@ -106,7 +112,7 @@ func renderHeader() {
 	)
 }
 
-// fmtStr renders a string with lipgloss style (color + bold option).
+// fmtStr renders a string with lipgloss style (color + bold option)
 func fmtStr(str string, color string, isBold bool) string {
 	style := lipgloss.NewStyle().Bold(isBold)
 	if color != "" {
@@ -115,7 +121,7 @@ func fmtStr(str string, color string, isBold bool) string {
 	return style.Render(str)
 }
 
-// failMessage prints an error prefix and the provided message.
+// failMessage prints an error prefix and the provided message
 func failMessage(msg string) {
 	fmt.Println(fmtStr("[ERROR]", RED, true), msg)
 }
