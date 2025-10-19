@@ -22,32 +22,61 @@ jobs:
       fail-fast: false
 
     steps:
+      # ----------------------------
+      # Checkout the repository
+      # ----------------------------
       - name: Check out code
         uses: actions/checkout@v4
-        
+
+      # ----------------------------
+      # Setup Go
+      # ----------------------------
       - name: Setup Go
-        id: go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.25
+          go-version: "^1.25"
 
+      # ----------------------------
+      # Read version from VERSION file
+      # ----------------------------
       - name: Read version
         id: version
-        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION"
 
+      # ----------------------------
+      # Build for each GOOS/GOARCH
+      # ----------------------------
       - name: Build and zip
-        run: make build VERSION=$VERSION GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+          OUTPUT="dist/BPB-Wizard-${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            OUTPUT="${OUTPUT}.exe"
+          fi
+          echo "Building for ${{ matrix.goos }}-$GOARCH -> $OUTPUT"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} GO111MODULE=on CGO_ENABLED=0 \
+          go build -trimpath -ldflags "-X main.VERSION=${{ env.VERSION }}" -o "$OUTPUT" ./...
+          echo "Build finished: $OUTPUT"
 
+      # ----------------------------
+      # Read release notes from RELEASE.md
+      # ----------------------------
       - name: Read release note
         id: read_release
         shell: bash
         run: |
-          r=$(cat RELEASE.md)         
-          r="${r//'%'/'%25'}"                               
-          r="${r//$'\n'/'%0A'}"                             
-          r="${r//$'\r'/'%0D'}"                             
-          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT          
+          r=$(cat RELEASE.md)
+          r="${r//'%'/'%25'}"
+          r="${r//$'\n'/'%0A'}"
+          r="${r//$'\r'/'%0D'}"
+          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
 
+      # ----------------------------
+      # Upload release assets
+      # ----------------------------
       - name: Upload Release Assets
         uses: svenstaro/upload-release-action@v2
         with:
